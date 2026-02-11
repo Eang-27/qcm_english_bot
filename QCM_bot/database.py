@@ -26,6 +26,7 @@ def init_db():
             score INTEGER NOT NULL,
             total INTEGER NOT NULL,
             percentage REAL NOT NULL,
+            time_seconds INTEGER,
             date TEXT NOT NULL
         )
     """)
@@ -41,7 +42,8 @@ def save_quiz_result(
     level: str,
     score: int,
     total: int,
-    percentage: float
+    percentage: float,
+    time_seconds: int = None
 ):
     """Save a quiz result to the database"""
     conn = sqlite3.connect(DB_NAME)
@@ -50,9 +52,9 @@ def save_quiz_result(
     date = datetime.now().isoformat()
     
     cursor.execute("""
-        INSERT INTO quiz_results (user_id, topic, level, score, total, percentage, date)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (user_id, topic, level, score, total, percentage, date))
+        INSERT INTO quiz_results (user_id, topic, level, score, total, percentage, time_seconds, date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (user_id, topic, level, score, total, percentage, time_seconds, date))
     
     conn.commit()
     conn.close()
@@ -75,31 +77,35 @@ def get_user_stats(user_id: int) -> Optional[Dict]:
     
     # Get grammar stats
     cursor.execute("""
-        SELECT COUNT(*), AVG(percentage)
+        SELECT COUNT(*), AVG(percentage), AVG(time_seconds)
         FROM quiz_results
         WHERE user_id = ? AND topic = 'grammar'
     """, (user_id,))
     grammar_data = cursor.fetchone()
     grammar_count = grammar_data[0] or 0
     grammar_avg = grammar_data[1] or 0.0
+    grammar_time = grammar_data[2] or 0.0
     
     # Get vocabulary stats
     cursor.execute("""
-        SELECT COUNT(*), AVG(percentage)
+        SELECT COUNT(*), AVG(percentage), AVG(time_seconds)
         FROM quiz_results
         WHERE user_id = ? AND topic = 'vocabulary'
     """, (user_id,))
     vocab_data = cursor.fetchone()
     vocab_count = vocab_data[0] or 0
     vocab_avg = vocab_data[1] or 0.0
+    vocab_time = vocab_data[2] or 0.0
     
     # Get overall average
     cursor.execute("""
-        SELECT AVG(percentage)
+        SELECT AVG(percentage), AVG(time_seconds)
         FROM quiz_results
         WHERE user_id = ?
     """, (user_id,))
-    overall_avg = cursor.fetchone()[0] or 0.0
+    overall_data = cursor.fetchone()
+    overall_avg = overall_data[0] or 0.0
+    overall_time = overall_data[1] or 0.0
     
     conn.close()
     
@@ -107,9 +113,12 @@ def get_user_stats(user_id: int) -> Optional[Dict]:
         "total_quizzes": total_quizzes,
         "grammar_count": grammar_count,
         "grammar_avg": grammar_avg,
+        "grammar_time": grammar_time,
         "vocabulary_count": vocab_count,
         "vocabulary_avg": vocab_avg,
+        "vocabulary_time": vocab_time,
         "overall_avg": overall_avg,
+        "overall_time": overall_time,
     }
 
 
