@@ -126,7 +126,7 @@ async def show_level_selection(query, topic):
             InlineKeyboardButton("C1", callback_data=f"level_{topic}_C1"),
             InlineKeyboardButton("C2", callback_data=f"level_{topic}_C2"),
         ],
-        [InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")],
+        [InlineKeyboardButton("<= Back to Menu", callback_data="back_to_menu")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -325,11 +325,11 @@ async def show_final_review(query, user_id):
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time Taken: {time_display}
 
-{'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
+{'Excellent!' if percentage >= 80 else 'Good job!' if percentage >= 60 else 'Keep practicing!'}
 
-═══════════════════════
-   COMPLETE REVIEW
-═══════════════════════
+═══════════════════
+  COMPLETE REVIEW
+═══════════════════
 
 """
         
@@ -358,7 +358,7 @@ async def show_final_review(query, user_id):
         full_review = review_header + "".join(review_questions)
         
         # Add footer
-        full_review += "═══════════════════════\n\nWant to practice more? Use /start"
+        full_review += "════════════════════\n\n Want to practice more? Use /start"
         
         # Clear quiz state before sending
         del user_quiz_state[user_id]
@@ -446,10 +446,10 @@ Start practicing with /start
 
 Overall Accuracy: {stats['overall_avg']:.1f}%
 
-Keep practicing to improve! 💪
+Keep practicing to improve!
         """
     
-    keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+    keyboard = [[InlineKeyboardButton("<= Back to Menu", callback_data="back_to_menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(text, reply_markup=reply_markup)
