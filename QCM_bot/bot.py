@@ -53,7 +53,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     welcome_text = f"""
-👋 Welcome {user.first_name}!
+Welcome {user.first_name}!
 
 I'm your English practice bot! 🎓
 
@@ -65,7 +65,7 @@ Track your progress with:
 • My Score - See your latest results
 • My Performance - View your improvement chart
 
-Let's start learning! 🚀
+Let's start learning!
     """
     
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
@@ -132,7 +132,7 @@ async def show_level_selection(query, topic):
     
     topic_name = "Grammar" if topic == "grammar" else "Vocabulary"
     text = f"""
-📚 {topic_name} Practice
+{topic_name} Practice
 
 Select your level:
 • A1 - Beginner
@@ -216,7 +216,7 @@ async def show_question(query, user_id, question_index):
     
     topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
     text = f"""
-📝 {topic_name} - Level {state['level']}
+{topic_name} - Level {state['level']}
 
 Question {question_index + 1}/10
 
@@ -320,7 +320,7 @@ async def show_final_review(query, user_id):
         
         # Build review message header
         topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
-        review_header = f"""🎯 Quiz Complete!
+        review_header = f""" Quiz Complete!
 
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time Taken: {time_display}
@@ -328,7 +328,7 @@ async def show_final_review(query, user_id):
 {'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
 
 ═══════════════════════
-📋 COMPLETE REVIEW
+   COMPLETE REVIEW
 ═══════════════════════
 
 """
@@ -364,7 +364,7 @@ async def show_final_review(query, user_id):
         del user_quiz_state[user_id]
         
         # Prepare keyboard
-        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        keyboard = [[InlineKeyboardButton("<= Main Menu", callback_data="back_to_menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         # Try to send as single message first
@@ -380,7 +380,7 @@ async def show_final_review(query, user_id):
             except Exception as reply_error:
                 logger.error(f"Failed to send review: {reply_error}")
                 # Last resort - send simple summary
-                simple_message = f"""🎯 Quiz Complete!
+                simple_message = f""" Quiz Complete!
 
 📊 Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time: {time_display}
@@ -391,7 +391,7 @@ Use /start to practice more!"""
     except Exception as e:
         logger.error(f"Critical error in show_final_review: {e}")
         # Make sure user can continue even if review fails
-        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        keyboard = [[InlineKeyboardButton("<= Main Menu", callback_data="back_to_menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         try:
             await query.message.reply_text(
@@ -434,17 +434,17 @@ Start practicing with /start
 🎯 Total Quizzes: {stats['total_quizzes']}
 ⏱️ Average Time: {overall_time}
 
-📘 Grammar:
++ Grammar:
    • Quizzes: {stats['grammar_count']}
    • Avg Score: {stats['grammar_avg']:.1f}%
    • Avg Time: {grammar_time}
 
-📗 Vocabulary:
++ Vocabulary:
    • Quizzes: {stats['vocabulary_count']}
    • Avg Score: {stats['vocabulary_avg']:.1f}%
    • Avg Time: {vocab_time}
 
-📈 Overall Accuracy: {stats['overall_avg']:.1f}%
+Overall Accuracy: {stats['overall_avg']:.1f}%
 
 Keep practicing to improve! 💪
         """
@@ -464,9 +464,9 @@ async def show_performance(query, user_id):
 📈 Performance Chart
 
 You need at least 2 quiz attempts to see your progress chart.
-Keep practicing! 🚀
+Keep practicing!
         """
-        keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+        keyboard = [[InlineKeyboardButton("<= Back to Menu", callback_data="back_to_menu")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup)
         return
@@ -477,7 +477,7 @@ Keep practicing! 🚀
     # Send chart as photo
     await query.message.reply_photo(
         photo=chart_buffer,
-        caption=f"📈 Your Progress Chart\n\nTotal Quizzes: {len(history)}\nKeep up the great work! 🎓"
+        caption=f"Your Progress Chart\n\nTotal Quizzes: {len(history)}\nKeep up the great work! 🎓"
     )
     
     # Show menu again
@@ -527,7 +527,7 @@ async def show_main_menu(query):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     text = """
-🏠 Main Menu
+Main Menu
 
 Choose what you want to do:
 • Practice Grammar or Vocabulary
@@ -548,7 +548,7 @@ async def show_main_menu_after_chart(query):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    text = "🏠 What would you like to do next?"
+    text = "What would you like to do next?"
     
     await query.message.reply_text(text, reply_markup=reply_markup)
 
@@ -595,7 +595,7 @@ async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     if not history or len(history) < 2:
         await update.message.reply_text(
             "You need at least 2 quiz attempts to see your progress chart.\n"
-            "Keep practicing! 🚀"
+            "Keep practicing!"
         )
         return
     
