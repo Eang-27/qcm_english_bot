@@ -182,11 +182,19 @@ async def start_quiz(query, user_id, topic, level):
 
 async def show_question(query, user_id, question_index):
     """Display a single question with options"""
-    state = user_quiz_state[user_id]
+    logger.info(f"show_question called - User: {user_id}, Index: {question_index}")
+    
+    state = user_quiz_state.get(user_id)
+    if not state:
+        logger.error(f"No quiz state for user {user_id}")
+        await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+        return
+    
     questions = state["questions"]
     
     if question_index >= len(questions):
         # Quiz finished
+        logger.info(f"Quiz finished for user {user_id}. Showing final review.")
         await show_final_review(query, user_id)
         return
     
@@ -217,13 +225,31 @@ Question {question_index + 1}/10
 Choose your answer:
     """
     
-    await query.edit_message_text(text, reply_markup=reply_markup)
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup)
+        logger.info(f"Question {question_index + 1} displayed successfully")
+    except Exception as e:
+        logger.error(f"Error displaying question: {e}")
+        # Try sending as new message if edit fails
+        await query.message.reply_text(text, reply_markup=reply_markup)
 
 
 async def process_answer(query, user_id, question_index, selected_option):
     """Process user's answer and move to next question"""
-    state = user_quiz_state[user_id]
+    logger.info(f"Processing answer - User: {user_id}, Question: {question_index}, Option: {selected_option}")
+    
+    state = user_quiz_state.get(user_id)
+    if not state:
+        logger.error(f"No quiz state for user {user_id}")
+        await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+        return
+    
     questions = state["questions"]
+    
+    if question_index >= len(questions):
+        logger.error(f"Invalid question index: {question_index}, total: {len(questions)}")
+        return
+    
     question_data = questions[question_index]
     
     correct_answer = question_data["answer"]
@@ -241,49 +267,60 @@ async def process_answer(query, user_id, question_index, selected_option):
     
     # Move to next question
     state["current_index"] += 1
+    logger.info(f"Moving to question {state['current_index']}, total questions: {len(questions)}")
+    
     await show_question(query, user_id, state["current_index"])
 
 
 async def show_final_review(query, user_id):
     """Show final score and complete review of all questions"""
-    state = user_quiz_state[user_id]
-    questions = state["questions"]
-    answers = state["answers"]
-    correct_count = state["correct_count"]
-    total_questions = len(questions)
-    
-    percentage = (correct_count / total_questions) * 100
-    
-    # Calculate time taken
-    start_time = state["start_time"]
-    end_time = datetime.now()
-    time_taken = end_time - start_time
-    
-    # Format time taken
-    total_seconds = int(time_taken.total_seconds())
-    minutes = total_seconds // 60
-    seconds = total_seconds % 60
-    
-    if minutes > 0:
-        time_display = f"{minutes} min {seconds} sec"
-    else:
-        time_display = f"{seconds} sec"
-    
-    # Save results to database
-    save_quiz_result(
-        user_id=user_id,
-        topic=state["topic"],
-        level=state["level"],
-        score=correct_count,
-        total=total_questions,
-        percentage=percentage,
-        time_seconds=total_seconds,  # Save time to database
-    )
-    
-    # Build review message header
-    topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
-    review_header = f"""
-🎯 Quiz Complete!
+    try:
+        state = user_quiz_state.get(user_id)
+        if not state:
+            logger.error(f"No quiz state found for user {user_id}")
+            await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+            return
+        
+        questions = state["questions"]
+        answers = state["answers"]
+        correct_count = state["correct_count"]
+        total_questions = len(questions)
+        
+        percentage = (correct_count / total_questions) * 100
+        
+        # Calculate time taken
+        start_time = state["start_time"]
+        end_time = datetime.now()
+        time_taken = end_time - start_time
+        
+        # Format time taken
+        total_seconds = int(time_taken.total_seconds())
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        
+        if minutes > 0:
+            time_display = f"{minutes} min {seconds} sec"
+        else:
+            time_display = f"{seconds} sec"
+        
+        # Save results to database
+        try:
+            save_quiz_result(
+                user_id=user_id,
+                topic=state["topic"],
+                level=state["level"],
+                score=correct_count,
+                total=total_questions,
+                percentage=percentage,
+                time_seconds=total_seconds,
+            )
+        except Exception as db_error:
+            logger.error(f"Database save error: {db_error}")
+            # Continue anyway - user should still see results
+        
+        # Build review message header
+        topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
+        review_header = f"""🎯 Quiz Complete!
 
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time Taken: {time_display}
@@ -295,70 +332,74 @@ async def show_final_review(query, user_id):
 ═══════════════════════
 
 """
-    
-    # Build review for each question
-    review_parts = []
-    current_part = ""
-    
-    for i, (question_data, answer_data) in enumerate(zip(questions, answers)):
-        question_text = question_data["q"]
-        options = question_data["options"]
-        selected_idx = answer_data["selected"]
-        correct_idx = answer_data["correct"]
-        is_correct = answer_data["is_correct"]
         
-        status = "✅ Correct" if is_correct else "❌ Wrong"
+        # Build review for each question - simpler format to avoid length issues
+        review_questions = []
         
-        question_review = f"""Q{i+1}. {question_text}
-
-Your answer: {chr(65+selected_idx)}. {options[selected_idx]}
-Correct answer: {chr(65+correct_idx)}. {options[correct_idx]}
-
-{status}
-
-───────────────────────
-
-"""
+        for i, (question_data, answer_data) in enumerate(zip(questions, answers)):
+            question_text = question_data["q"]
+            options = question_data["options"]
+            selected_idx = answer_data["selected"]
+            correct_idx = answer_data["correct"]
+            is_correct = answer_data["is_correct"]
+            
+            status = "✅" if is_correct else "❌"
+            
+            # Shortened format to fit more in one message
+            q_review = f"{status} Q{i+1}. {question_text}\n"
+            q_review += f"   You: {chr(65+selected_idx)}. {options[selected_idx]}\n"
+            if not is_correct:
+                q_review += f"   ✓ {chr(65+correct_idx)}. {options[correct_idx]}\n"
+            q_review += "\n"
+            
+            review_questions.append(q_review)
         
-        # Check if adding this question would exceed Telegram's limit (4096 chars)
-        # We use 3500 as safe limit to account for header and footer
-        if len(current_part) + len(question_review) > 3500:
-            review_parts.append(current_part)
-            current_part = question_review
-        else:
-            current_part += question_review
-    
-    # Add the last part
-    if current_part:
-        review_parts.append(current_part)
-    
-    # Clear quiz state before sending messages
-    del user_quiz_state[user_id]
-    
-    # Send the header with first part of review
-    keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    first_message = review_header + review_parts[0]
-    
-    # Add footer to first message if it's the only one
-    if len(review_parts) == 1:
-        first_message += """═══════════════════════
+        # Combine all reviews
+        full_review = review_header + "".join(review_questions)
+        
+        # Add footer
+        full_review += "═══════════════════════\n\nWant to practice more? Use /start"
+        
+        # Clear quiz state before sending
+        del user_quiz_state[user_id]
+        
+        # Prepare keyboard
+        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Try to send as single message first
+        try:
+            await query.edit_message_text(full_review, reply_markup=reply_markup)
+            logger.info(f"Review sent successfully for user {user_id}")
+        except Exception as telegram_error:
+            logger.error(f"Telegram edit error: {telegram_error}")
+            # If edit fails, send as new message
+            try:
+                await query.message.reply_text(full_review, reply_markup=reply_markup)
+                logger.info(f"Review sent as new message for user {user_id}")
+            except Exception as reply_error:
+                logger.error(f"Failed to send review: {reply_error}")
+                # Last resort - send simple summary
+                simple_message = f"""🎯 Quiz Complete!
 
-Want to practice more? Use /start
-"""
-    
-    await query.edit_message_text(first_message, reply_markup=reply_markup)
-    
-    # Send additional parts as separate messages if needed
-    for i, part in enumerate(review_parts[1:], 1):
-        # Add footer to last message
-        if i == len(review_parts) - 1:
-            part += """═══════════════════════
+📊 Score: {correct_count}/{total_questions} ({percentage:.1f}%)
+⏱️ Time: {time_display}
 
-Want to practice more? Use /start
-"""
-        await query.message.reply_text(part)
+Use /start to practice more!"""
+                await query.message.reply_text(simple_message, reply_markup=reply_markup)
+                
+    except Exception as e:
+        logger.error(f"Critical error in show_final_review: {e}")
+        # Make sure user can continue even if review fails
+        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        try:
+            await query.message.reply_text(
+                "Quiz completed! There was an issue showing the review. Use /start to try again.",
+                reply_markup=reply_markup
+            )
+        except:
+            pass  # If even this fails, user will need to use /start manually
 
 
 async def show_score(query, user_id):
