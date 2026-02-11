@@ -173,6 +173,7 @@ async def start_quiz(query, user_id, topic, level):
         "current_index": 0,
         "answers": [],  # Store user's selected answers
         "correct_count": 0,
+        "start_time": datetime.now(),  # Track quiz start time
     }
     
     # Show first question
@@ -253,6 +254,21 @@ async def show_final_review(query, user_id):
     
     percentage = (correct_count / total_questions) * 100
     
+    # Calculate time taken
+    start_time = state["start_time"]
+    end_time = datetime.now()
+    time_taken = end_time - start_time
+    
+    # Format time taken
+    total_seconds = int(time_taken.total_seconds())
+    minutes = total_seconds // 60
+    seconds = total_seconds % 60
+    
+    if minutes > 0:
+        time_display = f"{minutes} min {seconds} sec"
+    else:
+        time_display = f"{seconds} sec"
+    
     # Save results to database
     save_quiz_result(
         user_id=user_id,
@@ -261,6 +277,7 @@ async def show_final_review(query, user_id):
         score=correct_count,
         total=total_questions,
         percentage=percentage,
+        time_seconds=total_seconds,  # Save time to database
     )
     
     # Build review message
@@ -269,6 +286,7 @@ async def show_final_review(query, user_id):
 🎯 Quiz Complete!
 
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
+⏱️ Time Taken: {time_display}
 
 {'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
 
@@ -327,18 +345,35 @@ You haven't taken any quizzes yet!
 Start practicing with /start
         """
     else:
+        # Format average times
+        def format_time(seconds):
+            if seconds == 0:
+                return "N/A"
+            minutes = int(seconds // 60)
+            secs = int(seconds % 60)
+            if minutes > 0:
+                return f"{minutes}m {secs}s"
+            return f"{secs}s"
+        
+        overall_time = format_time(stats['overall_time'])
+        grammar_time = format_time(stats['grammar_time'])
+        vocab_time = format_time(stats['vocabulary_time'])
+        
         text = f"""
 📊 Your Performance Statistics
 
 🎯 Total Quizzes: {stats['total_quizzes']}
+⏱️ Average Time: {overall_time}
 
 📘 Grammar:
    • Quizzes: {stats['grammar_count']}
    • Avg Score: {stats['grammar_avg']:.1f}%
+   • Avg Time: {grammar_time}
 
 📗 Vocabulary:
    • Quizzes: {stats['vocabulary_count']}
    • Avg Score: {stats['vocabulary_avg']:.1f}%
+   • Avg Time: {vocab_time}
 
 📈 Overall Accuracy: {stats['overall_avg']:.1f}%
 
@@ -457,11 +492,24 @@ async def score_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not stats:
         text = "You haven't taken any quizzes yet! Use /start to begin."
     else:
+        # Format average times
+        def format_time(seconds):
+            if seconds == 0:
+                return "N/A"
+            minutes = int(seconds // 60)
+            secs = int(seconds % 60)
+            if minutes > 0:
+                return f"{minutes}m {secs}s"
+            return f"{secs}s"
+        
+        overall_time = format_time(stats['overall_time'])
+        
         text = f"""
 📊 Your Statistics
 
 Total Quizzes: {stats['total_quizzes']}
 Overall Accuracy: {stats['overall_avg']:.1f}%
+Average Time: {overall_time}
 
 Grammar: {stats['grammar_avg']:.1f}%
 Vocabulary: {stats['vocabulary_avg']:.1f}%
