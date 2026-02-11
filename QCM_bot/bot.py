@@ -512,9 +512,32 @@ def main():
     application.add_handler(CommandHandler("performance", performance_command))
     application.add_handler(CallbackQueryHandler(button_handler))
     
-    # Start bot with long polling (for Render free hosting)
-    logger.info("Bot started successfully!")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Check if running on Render (webhook mode) or locally (polling mode)
+    port = os.environ.get("PORT")
+    
+    if port:
+        # Render Web Service mode with webhook
+        webhook_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if not webhook_url:
+            raise ValueError(
+                "RENDER_EXTERNAL_URL not found! This should be auto-set by Render.\n"
+                "Format: https://your-service.onrender.com"
+            )
+        
+        logger.info(f"Starting bot in WEBHOOK mode on port {port}")
+        logger.info(f"Webhook URL: {webhook_url}")
+        
+        # Start webhook
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=int(port),
+            url_path=token,  # Use token as secret path
+            webhook_url=f"{webhook_url}/{token}",
+        )
+    else:
+        # Local development mode with polling
+        logger.info("Starting bot in POLLING mode (local development)")
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
