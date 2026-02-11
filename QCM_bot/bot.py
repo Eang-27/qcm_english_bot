@@ -53,9 +53,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     welcome_text = f"""
-Welcome {user.first_name}!
+👋 Welcome {user.first_name}!
 
-I'm your English practice bot! 
+I'm your English practice bot! 🎓
 
 Choose what you want to practice:
 • Grammar - Tenses, structures, rules
@@ -65,7 +65,7 @@ Track your progress with:
 • My Score - See your latest results
 • My Performance - View your improvement chart
 
-Let's start learning!
+Let's start learning! 🚀
     """
     
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
@@ -126,7 +126,7 @@ async def show_level_selection(query, topic):
             InlineKeyboardButton("C1", callback_data=f"level_{topic}_C1"),
             InlineKeyboardButton("C2", callback_data=f"level_{topic}_C2"),
         ],
-        [InlineKeyboardButton("<= Back to Menu", callback_data="back_to_menu")],
+        [InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -280,10 +280,10 @@ async def show_final_review(query, user_id):
         time_seconds=total_seconds,  # Save time to database
     )
     
-    # Build review message
+    # Build review message header
     topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
-    review_text = f"""
-Quiz Complete!
+    review_header = f"""
+🎯 Quiz Complete!
 
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time Taken: {time_display}
@@ -291,12 +291,15 @@ Quiz Complete!
 {'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
 
 ═══════════════════════
-   COMPLETE REVIEW
+📋 COMPLETE REVIEW
 ═══════════════════════
 
 """
     
-    # Add each question with review
+    # Build review for each question
+    review_parts = []
+    current_part = ""
+    
     for i, (question_data, answer_data) in enumerate(zip(questions, answers)):
         question_text = question_data["q"]
         options = question_data["options"]
@@ -306,31 +309,56 @@ Quiz Complete!
         
         status = "✅ Correct" if is_correct else "❌ Wrong"
         
-        review_text += f"""
-Q{i+1}. {question_text}
+        question_review = f"""Q{i+1}. {question_text}
 
 Your answer: {chr(65+selected_idx)}. {options[selected_idx]}
 Correct answer: {chr(65+correct_idx)}. {options[correct_idx]}
 
 {status}
 
----
+───────────────────────
 
 """
+        
+        # Check if adding this question would exceed Telegram's limit (4096 chars)
+        # We use 3500 as safe limit to account for header and footer
+        if len(current_part) + len(question_review) > 3500:
+            review_parts.append(current_part)
+            current_part = question_review
+        else:
+            current_part += question_review
     
-    review_text += """
-═══════════════════════
-
-Want to practice more? Use /start
-    """
+    # Add the last part
+    if current_part:
+        review_parts.append(current_part)
     
-    # Clear quiz state
+    # Clear quiz state before sending messages
     del user_quiz_state[user_id]
     
-    keyboard = [[InlineKeyboardButton("Main Menu", callback_data="back_to_menu")]]
+    # Send the header with first part of review
+    keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(review_text, reply_markup=reply_markup)
+    first_message = review_header + review_parts[0]
+    
+    # Add footer to first message if it's the only one
+    if len(review_parts) == 1:
+        first_message += """═══════════════════════
+
+Want to practice more? Use /start
+"""
+    
+    await query.edit_message_text(first_message, reply_markup=reply_markup)
+    
+    # Send additional parts as separate messages if needed
+    for i, part in enumerate(review_parts[1:], 1):
+        # Add footer to last message
+        if i == len(review_parts) - 1:
+            part += """═══════════════════════
+
+Want to practice more? Use /start
+"""
+        await query.message.reply_text(part)
 
 
 async def show_score(query, user_id):
@@ -365,19 +393,19 @@ Start practicing with /start
 🎯 Total Quizzes: {stats['total_quizzes']}
 ⏱️ Average Time: {overall_time}
 
-+ Grammar:
+📘 Grammar:
    • Quizzes: {stats['grammar_count']}
    • Avg Score: {stats['grammar_avg']:.1f}%
    • Avg Time: {grammar_time}
 
-+ Vocabulary:
+📗 Vocabulary:
    • Quizzes: {stats['vocabulary_count']}
    • Avg Score: {stats['vocabulary_avg']:.1f}%
    • Avg Time: {vocab_time}
 
 📈 Overall Accuracy: {stats['overall_avg']:.1f}%
 
-Keep practicing to improve!
+Keep practicing to improve! 💪
         """
     
     keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
@@ -458,7 +486,7 @@ async def show_main_menu(query):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     text = """
-Main Menu
+🏠 Main Menu
 
 Choose what you want to do:
 • Practice Grammar or Vocabulary
@@ -479,7 +507,7 @@ async def show_main_menu_after_chart(query):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    text = "What would you like to do next?"
+    text = "🏠 What would you like to do next?"
     
     await query.message.reply_text(text, reply_markup=reply_markup)
 
@@ -533,7 +561,7 @@ async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     chart_buffer = generate_performance_chart(history)
     await update.message.reply_photo(
         photo=chart_buffer,
-        caption=f"Your Progress Chart\n\nTotal Quizzes: {len(history)}"
+        caption=f"📈 Your Progress Chart\n\nTotal Quizzes: {len(history)}"
     )
 
 
