@@ -53,9 +53,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     welcome_text = f"""
-👋 Welcome {user.first_name}!
+Welcome {user.first_name}!
 
-I'm your English practice bot! 🎓
+I'm your English practice bot! 
 
 Choose what you want to practice:
 • Grammar - Tenses, structures, rules
@@ -65,7 +65,7 @@ Track your progress with:
 • My Score - See your latest results
 • My Performance - View your improvement chart
 
-Let's start learning! 🚀
+Let's start learning!
     """
     
     await update.message.reply_text(welcome_text, reply_markup=reply_markup)
@@ -126,7 +126,7 @@ async def show_level_selection(query, topic):
             InlineKeyboardButton("C1", callback_data=f"level_{topic}_C1"),
             InlineKeyboardButton("C2", callback_data=f"level_{topic}_C2"),
         ],
-        [InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")],
+        [InlineKeyboardButton("<= Back to Menu", callback_data="back_to_menu")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -283,7 +283,7 @@ async def show_final_review(query, user_id):
     # Build review message
     topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
     review_text = f"""
-🎯 Quiz Complete!
+Quiz Complete!
 
 📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
 ⏱️ Time Taken: {time_display}
@@ -291,7 +291,7 @@ async def show_final_review(query, user_id):
 {'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
 
 ═══════════════════════
-📋 COMPLETE REVIEW
+   COMPLETE REVIEW
 ═══════════════════════
 
 """
@@ -327,7 +327,7 @@ Want to practice more? Use /start
     # Clear quiz state
     del user_quiz_state[user_id]
     
-    keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+    keyboard = [[InlineKeyboardButton("Main Menu", callback_data="back_to_menu")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(review_text, reply_markup=reply_markup)
@@ -365,19 +365,19 @@ Start practicing with /start
 🎯 Total Quizzes: {stats['total_quizzes']}
 ⏱️ Average Time: {overall_time}
 
-📘 Grammar:
++ Grammar:
    • Quizzes: {stats['grammar_count']}
    • Avg Score: {stats['grammar_avg']:.1f}%
    • Avg Time: {grammar_time}
 
-📗 Vocabulary:
++ Vocabulary:
    • Quizzes: {stats['vocabulary_count']}
    • Avg Score: {stats['vocabulary_avg']:.1f}%
    • Avg Time: {vocab_time}
 
 📈 Overall Accuracy: {stats['overall_avg']:.1f}%
 
-Keep practicing to improve! 💪
+Keep practicing to improve!
         """
     
     keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
@@ -458,7 +458,7 @@ async def show_main_menu(query):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     text = """
-🏠 Main Menu
+Main Menu
 
 Choose what you want to do:
 • Practice Grammar or Vocabulary
@@ -479,7 +479,7 @@ async def show_main_menu_after_chart(query):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    text = "🏠 What would you like to do next?"
+    text = "What would you like to do next?"
     
     await query.message.reply_text(text, reply_markup=reply_markup)
 
@@ -533,7 +533,7 @@ async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     chart_buffer = generate_performance_chart(history)
     await update.message.reply_photo(
         photo=chart_buffer,
-        caption=f"📈 Your Progress Chart\n\nTotal Quizzes: {len(history)}"
+        caption=f"Your Progress Chart\n\nTotal Quizzes: {len(history)}"
     )
 
 
