@@ -191,7 +191,7 @@ GRAMMAR_QUESTIONS = {
  "options": ["is", "are", "was", "be"], "answer": 1},
 
 {"q": "I’m looking forward to ___ you.",
- "options": ["see", "seen", "saw", "seeing"], "answer": },
+ "options": ["see", "seen", "saw", "seeing"], "answer":3},
 
 {"q": "He works ___ than his brother.",
  "options": ["hard", "harder", "hardest", "more hard"], "answer": 1},
