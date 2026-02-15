@@ -388,6 +388,95 @@ VOCABULARY_QUESTIONS = {
             "options": ["challenges", "disputes", "contests", "refutes"],
             "answer": 0
         },
+    {"q": "The government introduced new policies to ___ economic growth.", 
+     "options": ["stimulate", "destroy", "reduce", "ignore"], "answer": 0},
+
+    {"q": "Many scientists are concerned about the rapid ___ of climate change.", 
+     "options": ["decline", "acceleration", "prevention", "disappearance"], "answer": 1},
+
+    {"q": "The company aims to ___ its market share in Asia.", 
+     "options": ["expand", "shorten", "weaken", "limit"], "answer": 0},
+
+    {"q": "There is growing ___ that artificial intelligence may replace human jobs.", 
+     "options": ["agreement", "concern", "celebration", "certainty"], "answer": 1},
+
+    {"q": "The research provides ___ evidence to support the theory.", 
+     "options": ["weak", "limited", "compelling", "minor"], "answer": 2},
+
+    {"q": "Many students face financial ___ while studying abroad.", 
+     "options": ["advantages", "benefits", "constraints", "luxuries"], "answer": 2},
+
+    {"q": "The new system is designed to improve workplace ___.", 
+     "options": ["efficiency", "confusion", "failure", "delay"], "answer": 0},
+
+    {"q": "Pollution has a detrimental ___ on public health.", 
+     "options": ["effect", "result", "impact", "damage"], "answer": 2},
+
+    {"q": "The results were ___ different from what we expected.", 
+     "options": ["significantly", "barely", "hardly", "slightly"], "answer": 0},
+
+    {"q": "The government should take ___ action to address unemployment.", 
+     "options": ["immediate", "slow", "optional", "minor"], "answer": 0},
+
+    {"q": "The company faced fierce ___ from its competitors.", 
+     "options": ["cooperation", "competition", "celebration", "discussion"], "answer": 1},
+
+    {"q": "The policy was implemented to reduce income ___.", 
+     "options": ["equality", "inequality", "similarity", "balance"], "answer": 1},
+
+    {"q": "The professor delivered a ___ lecture on global economics.", 
+     "options": ["boring", "insightful", "ordinary", "basic"], "answer": 1},
+
+    {"q": "The number of car accidents has ___ dramatically over the past decade.", 
+     "options": ["increased", "improved", "solved", "recovered"], "answer": 0},
+
+    {"q": "The issue remains highly ___ among experts.", 
+     "options": ["controversial", "clear", "obvious", "simple"], "answer": 0},
+
+    {"q": "The organization provides financial ___ to low-income families.", 
+     "options": ["assistance", "damage", "restriction", "punishment"], "answer": 0},
+
+    {"q": "The project was ___ due to a lack of funding.", 
+     "options": ["completed", "delayed", "accelerated", "approved"], "answer": 1},
+
+    {"q": "The findings highlight the ___ of early education.", 
+     "options": ["importance", "weakness", "difficulty", "danger"], "answer": 0},
+
+    {"q": "The company has adopted a more environmentally ___ approach.", 
+     "options": ["friendly", "hostile", "harmful", "careless"], "answer": 0},
+
+    {"q": "There is a growing demand for highly ___ workers.", 
+     "options": ["skilled", "lazy", "weak", "untrained"], "answer": 0},
+
+    {"q": "The government must ___ stricter regulations.", 
+     "options": ["enforce", "ignore", "remove", "avoid"], "answer": 0},
+
+    {"q": "The new law has had a profound ___ on society.", 
+     "options": ["impact", "problem", "question", "debate"], "answer": 0},
+
+    {"q": "The scientist proposed a ___ solution to the problem.", 
+     "options": ["temporary", "innovative", "traditional", "simple"], "answer": 1},
+
+    {"q": "The company is facing serious financial ___.", 
+     "options": ["stability", "growth", "difficulties", "profits"], "answer": 2},
+
+    {"q": "The government aims to ___ poverty in rural areas.", 
+     "options": ["reduce", "increase", "expand", "ignore"], "answer": 0},
+
+    {"q": "The results were ___ with previous studies.", 
+     "options": ["consistent", "confused", "inconsistent", "irrelevant"], "answer": 0},
+
+    {"q": "The rapid ___ of technology has transformed communication.", 
+     "options": ["development", "decline", "loss", "damage"], "answer": 0},
+
+    {"q": "The company needs to ___ its strategy to remain competitive.", 
+     "options": ["adapt", "destroy", "ignore", "remove"], "answer": 0},
+
+    {"q": "The study emphasizes the need for sustainable ___.", 
+     "options": ["development", "destruction", "reduction", "decline"], "answer": 0},
+
+    {"q": "The problem is becoming increasingly ___.", 
+     "options": ["serious", "minor", "simple", "clear"], "answer": 0}
     ],
     
     "C2": [
@@ -466,5 +555,82 @@ VOCABULARY_QUESTIONS = {
             "options": ["cogent", "compelling", "persuasive", "trenchant"],
             "answer": 3
         },
+    ],
+    "A1": [
+        {"q": "I feel very ___ today.", "options": ["happy", "economic", "complex", "global"], "answer": 0},
+        {"q": "She has a ___ cat.", "options": ["blue", "small", "difficult", "expensive"], "answer": 1},
+        {"q": "I ___ my homework every day.", "options": ["do", "make", "build", "create"], "answer": 0},
+        {"q": "This book is very ___.", "options": ["interesting", "pollution", "government", "analysis"], "answer": 0},
+        {"q": "We eat ___ every morning.", "options": ["breakfast", "internet", "money", "traffic"], "answer": 0},
+        {"q": "My father works in an ___.", "options": ["office", "forest", "airport", "river"], "answer": 0},
+        {"q": "She is my best ___.", "options": ["friend", "system", "project", "policy"], "answer": 0},
+        {"q": "I like to ___ music.", "options": ["listen to", "watch", "look", "read"], "answer": 0},
+        {"q": "The sun is very ___ today.", "options": ["hot", "slow", "cheap", "late"], "answer": 0},
+        {"q": "He can ___ English.", "options": ["speak", "build", "grow", "drive"], "answer": 0}
+    ],
+
+    "A2": [
+        {"q": "I usually ___ up at 7 a.m.", "options": ["wake", "stand", "sit", "open"], "answer": 0},
+        {"q": "She is afraid of ___.", "options": ["spiders", "economy", "science", "culture"], "answer": 0},
+        {"q": "The movie was very ___.", "options": ["boring", "pollution", "industry", "research"], "answer": 0},
+        {"q": "I need to buy some ___ for dinner.", "options": ["food", "traffic", "homework", "advice"], "answer": 0},
+        {"q": "He is wearing a ___ jacket.", "options": ["black", "global", "academic", "social"], "answer": 0},
+        {"q": "We went on a school ___.", "options": ["trip", "policy", "analysis", "debate"], "answer": 0},
+        {"q": "She sent me a ___.", "options": ["message", "theory", "project", "strategy"], "answer": 0},
+        {"q": "I forgot my ___.", "options": ["keys", "environment", "education", "evidence"], "answer": 0},
+        {"q": "The shop is ___ today.", "options": ["closed", "advanced", "complex", "efficient"], "answer": 0},
+        {"q": "He is very ___ at football.", "options": ["good", "significant", "major", "formal"], "answer": 0}
+    ],
+
+    "B1": [
+        {"q": "The government plans to ___ taxes next year.", "options": ["increase", "listen", "arrive", "climb"], "answer": 0},
+        {"q": "The company is facing financial ___.", "options": ["problems", "happiness", "weather", "flowers"], "answer": 0},
+        {"q": "She made a very important ___.", "options": ["decision", "banana", "river", "chair"], "answer": 0},
+        {"q": "Pollution has become a serious ___.", "options": ["issue", "friend", "meal", "holiday"], "answer": 0},
+        {"q": "He gave a short ___.", "options": ["speech", "apple", "shoe", "garden"], "answer": 0},
+        {"q": "There is a strong ___ between diet and health.", "options": ["connection", "chair", "lesson", "window"], "answer": 0},
+        {"q": "The number of students has ___.", "options": ["increased", "slept", "broken", "fallen asleep"], "answer": 0},
+        {"q": "She showed great ___.", "options": ["confidence", "sandwich", "forest", "traffic"], "answer": 0},
+        {"q": "We need to find a ___.", "options": ["solution", "shirt", "pen", "song"], "answer": 0},
+        {"q": "He is responsible for the ___.", "options": ["project", "banana", "holiday", "shoe"], "answer": 0}
+    ],
+
+    "B2": [
+        {"q": "The company aims to ___ its profits.", "options": ["maximize", "sleep", "ignore", "forget"], "answer": 0},
+        {"q": "There is growing ___ about climate change.", "options": ["concern", "banana", "music", "friend"], "answer": 0},
+        {"q": "The results were highly ___.", "options": ["significant", "yellow", "tall", "cheap"], "answer": 0},
+        {"q": "The government introduced new ___.", "options": ["regulations", "sandwiches", "flowers", "chairs"], "answer": 0},
+        {"q": "The issue remains ___.", "options": ["controversial", "happy", "blue", "simple"], "answer": 0},
+        {"q": "The policy had a negative ___.", "options": ["impact", "table", "window", "river"], "answer": 0},
+        {"q": "The company must ___ quickly.", "options": ["adapt", "eat", "sleep", "run"], "answer": 0},
+        {"q": "The study provides strong ___.", "options": ["evidence", "chicken", "holiday", "shirt"], "answer": 0},
+        {"q": "There are several ___ to consider.", "options": ["factors", "bananas", "roads", "pens"], "answer": 0},
+        {"q": "The economy is facing a ___.", "options": ["crisis", "picnic", "lesson", "gift"], "answer": 0}
+    ],
+
+    "C1": [
+        {"q": "The proposal was met with widespread ___.", "options": ["criticism", "apples", "happiness", "chairs"], "answer": 0},
+        {"q": "The findings were ___ with previous research.", "options": ["consistent", "hungry", "cheap", "angry"], "answer": 0},
+        {"q": "The government must ___ corruption.", "options": ["combat", "cook", "paint", "carry"], "answer": 0},
+        {"q": "The issue is highly ___.", "options": ["complex", "yellow", "short", "easy"], "answer": 0},
+        {"q": "She demonstrated remarkable ___.", "options": ["resilience", "banana", "holiday", "music"], "answer": 0},
+        {"q": "The company faces fierce ___.", "options": ["competition", "weather", "chair", "coffee"], "answer": 0},
+        {"q": "The results were ___ unexpected.", "options": ["utterly", "slightly", "barely", "weakly"], "answer": 0},
+        {"q": "The theory remains largely ___.", "options": ["unchallenged", "hungry", "blue", "fast"], "answer": 0},
+        {"q": "The policy has long-term ___.", "options": ["implications", "apples", "flowers", "cars"], "answer": 0},
+        {"q": "The argument lacks sufficient ___.", "options": ["evidence", "music", "traffic", "bread"], "answer": 0}
+    ],
+
+    "C2": [
+        {"q": "The speech was remarkably ___.", "options": ["eloquent", "happy", "big", "short"], "answer": 0},
+        {"q": "The theory was eventually ___.", "options": ["refuted", "eaten", "bought", "cleaned"], "answer": 0},
+        {"q": "The policy proved to be ___.", "options": ["counterproductive", "blue", "cheap", "friendly"], "answer": 0},
+        {"q": "He delivered a ___ critique.", "options": ["scathing", "small", "warm", "soft"], "answer": 0},
+        {"q": "The results were largely ___.", "options": ["inconclusive", "happy", "fast", "tiny"], "answer": 0},
+        {"q": "The argument was fundamentally ___.", "options": ["flawed", "green", "tasty", "tall"], "answer": 0},
+        {"q": "The decision sparked widespread ___.", "options": ["outrage", "breakfast", "coffee", "lesson"], "answer": 0},
+        {"q": "The data was meticulously ___.", "options": ["analyzed", "eaten", "broken", "closed"], "answer": 0},
+        {"q": "The theory gained considerable ___.", "options": ["credibility", "apples", "water", "chairs"], "answer": 0},
+        {"q": "The strategy was brilliantly ___.", "options": ["executed", "drunk", "cut", "washed"], "answer": 0}
     ],
 }
