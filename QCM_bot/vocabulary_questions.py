@@ -702,17 +702,3 @@ VOCABULARY_QUESTIONS = {
         {"q": "The strategy was brilliantly ___.", "options": ["executed", "drunk", "cut", "washed"], "answer": 0}
     ],
 }
-def shuffle_questions(VOCABULARY_QUESTIONS):
-    shuffled_list = []
-    for q in VOCABULARY_QUESTIONS:
-        opts = q["options"].copy()
-        random.shuffle(opts)
-        answer_index = opts.index(q["answer"])
-        shuffled_list.append({"q": q["q"], "options": opts, "answer": answer_index})
-    return shuffled_list
-
-random_bac_questions = shuffle_questions(VOCABULARY_QUESTIONS)
-
-# Example output
-for q in random_bac_questions:
-    print(q)
