@@ -167,13 +167,13 @@ GRAMMAR_QUESTIONS = {
  "options": ["gives", "was given", "is given", "gave"], "answer": 1},
 
 {"q": "He asked me where I ___ from.",
- "options": ["am", "was", "were", "be"], "answer": 1},
+ "options": ["am", "be", "were", "was"], "answer": 3},
 
 {"q": "There isn’t ___ sugar left.",
  "options": ["many", "much", "a few", "few"], "answer": 1},
 
 {"q": "She is good ___ English.",
- "options": ["at", "in", "on", "for"], "answer": 0},
+ "options": ["for", "in", "on", "at"], "answer": 3},
 
 {"q": "The more you practice, ___ you improve.",
  "options": ["more", "the more", "most", "the most"], "answer": 1},
@@ -182,7 +182,7 @@ GRAMMAR_QUESTIONS = {
  "options": ["leave", "to leave", "leaving", "left"], "answer": 2},
 
 {"q": "She speaks English very ___.",
- "options": ["good", "well", "better", "best"], "answer": 1},
+ "options": ["good", "best", "better", "well"], "answer": 3},
 
 {"q": "We have finished our homework, ___?",
  "options": ["have we", "haven’t we", "do we", "don’t we"], "answer": 1},
@@ -191,7 +191,7 @@ GRAMMAR_QUESTIONS = {
  "options": ["is", "are", "was", "be"], "answer": 1},
 
 {"q": "I’m looking forward to ___ you.",
- "options": ["see", "seeing", "saw", "seen"], "answer": 1},
+ "options": ["see", "seen", "saw", "seeing"], "answer": },
 
 {"q": "He works ___ than his brother.",
  "options": ["hard", "harder", "hardest", "more hard"], "answer": 1},
