@@ -157,6 +157,75 @@ GRAMMAR_QUESTIONS = {
     ],
     
     "B1": [
+        {"q": "If I ___ enough money, I would buy a new house.",
+ "options": ["have", "had", "will have", "am having"], "answer": 1},
+
+{"q": "She has lived here ___ 2018.",
+ "options": ["for", "since", "from", "during"], "answer": 1},
+
+{"q": "The book ___ by my teacher yesterday.",
+ "options": ["gives", "was given", "is given", "gave"], "answer": 1},
+
+{"q": "He asked me where I ___ from.",
+ "options": ["am", "was", "were", "be"], "answer": 1},
+
+{"q": "There isn’t ___ sugar left.",
+ "options": ["many", "much", "a few", "few"], "answer": 1},
+
+{"q": "She is good ___ English.",
+ "options": ["at", "in", "on", "for"], "answer": 0},
+
+{"q": "The more you practice, ___ you improve.",
+ "options": ["more", "the more", "most", "the most"], "answer": 1},
+
+{"q": "He suggested ___ earlier.",
+ "options": ["leave", "to leave", "leaving", "left"], "answer": 2},
+
+{"q": "She speaks English very ___.",
+ "options": ["good", "well", "better", "best"], "answer": 1},
+
+{"q": "We have finished our homework, ___?",
+ "options": ["have we", "haven’t we", "do we", "don’t we"], "answer": 1},
+
+{"q": "Neither the teacher nor the students ___ ready.",
+ "options": ["is", "are", "was", "be"], "answer": 1},
+
+{"q": "I’m looking forward to ___ you.",
+ "options": ["see", "seeing", "saw", "seen"], "answer": 1},
+
+{"q": "He works ___ than his brother.",
+ "options": ["hard", "harder", "hardest", "more hard"], "answer": 1},
+
+{"q": "The exam was ___ difficult than I expected.",
+ "options": ["more", "most", "very", "so"], "answer": 0},
+
+{"q": "If she studies hard, she ___ pass the exam.",
+ "options": ["will", "would", "can", "must"], "answer": 0},
+
+{"q": "That’s the man ___ helped me.",
+ "options": ["which", "who", "where", "whose"], "answer": 1},
+
+{"q": "He stopped ___ because he was tired.",
+ "options": ["run", "running", "to run", "ran"], "answer": 1},
+
+{"q": "The students ___ playing football when it started to rain.",
+ "options": ["are", "were", "was", "is"], "answer": 1},
+
+{"q": "She has never ___ to Thailand.",
+ "options": ["go", "went", "been", "going"], "answer": 2},
+
+{"q": "The teacher told us ___ quiet.",
+ "options": ["be", "to be", "being", "been"], "answer": 1},
+        {"q": "If I ___ enough money, I would buy a new house.", "options": ["have", "had", "will have", "am having"], "answer": "had"},
+    {"q": "She has lived here ___ 2018.", "options": ["for", "since", "from", "during"], "answer": "since"},
+    {"q": "The book ___ by my teacher yesterday.", "options": ["gives", "was given", "is given", "gave"], "answer": "was given"},
+    {"q": "He asked me where I ___ from.", "options": ["am", "was", "were", "be"], "answer": "was"},
+    {"q": "There isn’t ___ sugar left.", "options": ["many", "much", "a few", "few"], "answer": "much"},
+    {"q": "She is good ___ English.", "options": ["at", "in", "on", "for"], "answer": "at"},
+    {"q": "The more you practice, ___ you improve.", "options": ["more", "the more", "most", "the most"], "answer": "the more"},
+    {"q": "He suggested ___ earlier.", "options": ["leave", "to leave", "leaving", "left"], "answer": "leaving"},
+    {"q": "She speaks English very ___.", "options": ["good", "well", "better", "best"], "answer": "well"},
+    {"q": "We have finished our homework, ___?", "options": ["have we", "haven’t we", "do we", "don’t we"], "answer": "haven’t we"},
         {
             "q": "If I ___ you, I would accept the job offer.",
             "options": ["am", "was", "were", "be"],
