@@ -1,383 +1,712 @@
-#!/usr/bin/env python3
-# bot.py
-# 🤖 English Learning Telegram Bot
-# Uses long polling (perfect for PythonAnywhere free hosting)
+"""
+English Grammar & Vocabulary Practice Bot for Telegram
+A beginner-friendly bot for students to practice English with QCM quizzes
+"""
 
 import os
 import logging
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+)
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from io import BytesIO
 
-# Import our questions database
-from questions import QUESTIONS
+# Import question banks
+from grammar_questions import GRAMMAR_QUESTIONS
+from vocabulary_questions import VOCABULARY_QUESTIONS
 
-# ============================================
-# 🔐 CONFIGURATION
-# ============================================
-# IMPORTANT: Put your Telegram bot token here
-# Get it from @BotFather on Telegram
-BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
+# Import database functions
+from database import (
+    init_db,
+    save_quiz_result,
+    get_user_stats,
+    get_user_history,
+)
 
-# Enable logging to see what's happening
+# Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# ============================================
-# 💾 SIMPLE USER DATA STORAGE
-# ============================================
-# Stores user scores in memory (resets when bot restarts)
-# For permanent storage, you can use SQLite later
-user_data = {}
+# Quiz state management (stored per user)
+user_quiz_state = {}
 
-def get_user_score(user_id):
-    """Get or create user score data"""
-    if user_id not in user_data:
-        user_data[user_id] = {
-            'grammar_correct': 0,
-            'grammar_total': 0,
-            'vocabulary_correct': 0,
-            'vocabulary_total': 0,
-            'current_category': None,
-            'current_level': None,
-            'current_question_index': 0,
-            'quiz_start_correct': 0,  # Score when quiz started
-            'quiz_start_total': 0      # Total when quiz started
-        }
-    return user_data[user_id]
-
-# ============================================
-# 📱 COMMAND HANDLERS
-# ============================================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle /start command - Show main menu"""
+    """Send welcome message and main menu"""
     user = update.effective_user
     
-    # Create main menu keyboard
     keyboard = [
-        [InlineKeyboardButton("📘 Grammar", callback_data='category_grammar')],
-        [InlineKeyboardButton("📗 Vocabulary", callback_data='category_vocabulary')],
-        [InlineKeyboardButton("📊 My Score", callback_data='show_score')]
+        [InlineKeyboardButton("📘 Grammar", callback_data="topic_grammar")],
+        [InlineKeyboardButton("📗 Vocabulary", callback_data="topic_vocabulary")],
+        [InlineKeyboardButton("📊 My Score", callback_data="my_score")],
+        [InlineKeyboardButton("📈 My Performance", callback_data="my_performance")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    welcome_message = f"""
+    welcome_text = f"""
 👋 Welcome {user.first_name}!
 
-I'm your English Learning Bot! 🎓
+I'm your English practice bot! 🎓
 
-Practice grammar and vocabulary with multiple-choice questions.
+Choose what you want to practice:
+• Grammar - Tenses, structures, rules
+• Vocabulary - Words, phrases, expressions
 
-Choose a category to start:
+Track your progress with:
+• My Score - See your latest results
+• My Performance - View your improvement chart
+
+Let's start learning! 🚀
     """
     
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
 
-# ============================================
-# 🎯 CALLBACK HANDLERS (Button Clicks)
-# ============================================
 
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle all button clicks"""
     query = update.callback_query
-    await query.answer()  # Acknowledge the button click
+    await query.answer()
     
     user_id = query.from_user.id
     data = query.data
     
-    # ---- CATEGORY SELECTION (Grammar or Vocabulary) ----
-    if data.startswith('category_'):
-        category = data.replace('category_', '')
-        await show_level_menu(query, user_id, category)
+    # Topic selection (Grammar/Vocabulary)
+    if data.startswith("topic_"):
+        topic = data.split("_")[1]
+        await show_level_selection(query, topic)
     
-    # ---- LEVEL SELECTION (A1, A2, B1, etc.) ----
-    elif data.startswith('level_'):
-        level = data.replace('level_', '')
-        await start_quiz(query, user_id, level)
+    # Level selection (A1-C2)
+    elif data.startswith("level_"):
+        parts = data.split("_")
+        topic = parts[1]
+        level = parts[2]
+        await start_quiz(query, user_id, topic, level)
     
-    # ---- ANSWER SELECTION ----
-    elif data.startswith('answer_'):
-        answer_index = int(data.replace('answer_', ''))
-        await check_answer(query, user_id, answer_index)
+    # Answer selection
+    elif data.startswith("answer_"):
+        parts = data.split("_")
+        question_index = int(parts[1])
+        selected_option = int(parts[2])
+        await process_answer(query, user_id, question_index, selected_option)
     
-    # ---- NEXT QUESTION ----
-    elif data == 'next_question':
-        await show_question(query, user_id)
-    
-    # ---- QUIZ RESULTS ----
-    elif data == 'quiz_results':
-        await show_quiz_results(query, user_id)
-    
-    # ---- SHOW SCORE ----
-    elif data == 'show_score':
+    # My Score
+    elif data == "my_score":
         await show_score(query, user_id)
     
-    # ---- BACK TO MAIN MENU ----
-    elif data == 'main_menu':
+    # My Performance
+    elif data == "my_performance":
+        await show_performance(query, user_id)
+    
+    # Back to menu
+    elif data == "back_to_menu":
         await show_main_menu(query)
 
-# ============================================
-# 📋 MENU FUNCTIONS
-# ============================================
 
-async def show_level_menu(query, user_id, category):
-    """Show level selection (A1-C2)"""
-    user_score = get_user_score(user_id)
-    user_score['current_category'] = category
-    
-    # Create level buttons
+async def show_level_selection(query, topic):
+    """Show level selection buttons"""
     keyboard = [
-        [InlineKeyboardButton("A1 (Beginner)", callback_data='level_A1'),
-         InlineKeyboardButton("A2 (Elementary)", callback_data='level_A2')],
-        [InlineKeyboardButton("B1 (Intermediate)", callback_data='level_B1'),
-         InlineKeyboardButton("B2 (Upper-Intermediate)", callback_data='level_B2')],
-        [InlineKeyboardButton("C1 (Advanced)", callback_data='level_C1'),
-         InlineKeyboardButton("C2 (Proficiency)", callback_data='level_C2')],
-        [InlineKeyboardButton("🏠 Main Menu", callback_data='main_menu')]
+        [
+            InlineKeyboardButton("A1", callback_data=f"level_{topic}_A1"),
+            InlineKeyboardButton("A2", callback_data=f"level_{topic}_A2"),
+        ],
+        [
+            InlineKeyboardButton("B1", callback_data=f"level_{topic}_B1"),
+            InlineKeyboardButton("B2", callback_data=f"level_{topic}_B2"),
+        ],
+        [
+            InlineKeyboardButton("C1", callback_data=f"level_{topic}_C1"),
+            InlineKeyboardButton("C2", callback_data=f"level_{topic}_C2"),
+        ],
+        [InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    category_emoji = "📘" if category == "grammar" else "📗"
-    message = f"{category_emoji} Choose your level for {category.upper()}:"
+    topic_name = "Grammar" if topic == "grammar" else "Vocabulary"
+    text = f"""
+📚 {topic_name} Practice
+
+Select your level:
+• A1 - Beginner
+• A2 - Elementary
+• B1 - Intermediate
+• B2 - Upper Intermediate
+• C1 - Advanced
+• C2 - Proficient
+    """
     
-    await query.edit_message_text(message, reply_markup=reply_markup)
+    await query.edit_message_text(text, reply_markup=reply_markup)
+
+
+async def start_quiz(query, user_id, topic, level):
+    """Initialize and start a new quiz session"""
+    # Get questions based on topic
+    if topic == "grammar":
+        questions = GRAMMAR_QUESTIONS.get(level, [])
+    else:
+        questions = VOCABULARY_QUESTIONS.get(level, [])
+    
+    if not questions:
+        await query.edit_message_text(
+            f"Sorry, no questions available for {level} level yet.\n"
+            "Please try another level."
+        )
+        return
+    
+    # Take only 10 questions (or less if not enough available)
+    import random
+    quiz_questions = random.sample(questions, min(10, len(questions)))
+    
+    # Initialize quiz state for this user
+    user_quiz_state[user_id] = {
+        "topic": topic,
+        "level": level,
+        "questions": quiz_questions,
+        "current_index": 0,
+        "answers": [],  # Store user's selected answers
+        "correct_count": 0,
+        "start_time": datetime.now(),  # Track quiz start time
+    }
+    
+    # Show first question
+    await show_question(query, user_id, 0)
+
+
+async def show_question(query, user_id, question_index):
+    """Display a single question with options"""
+    logger.info(f"show_question called - User: {user_id}, Index: {question_index}")
+    
+    state = user_quiz_state.get(user_id)
+    if not state:
+        logger.error(f"No quiz state for user {user_id}")
+        await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+        return
+    
+    questions = state["questions"]
+    
+    if question_index >= len(questions):
+        # Quiz finished
+        logger.info(f"Quiz finished for user {user_id}. Showing final review.")
+        await show_final_review(query, user_id)
+        return
+    
+    question_data = questions[question_index]
+    question_text = question_data["q"]
+    options = question_data["options"]
+    
+    # Create option buttons
+    keyboard = []
+    for i, option in enumerate(options):
+        keyboard.append([
+            InlineKeyboardButton(
+                f"{chr(65+i)}. {option}",
+                callback_data=f"answer_{question_index}_{i}"
+            )
+        ])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
+    text = f"""
+📝 {topic_name} - Level {state['level']}
+
+Question {question_index + 1}/10
+
+{question_text}
+
+Choose your answer:
+    """
+    
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup)
+        logger.info(f"Question {question_index + 1} displayed successfully")
+    except Exception as e:
+        logger.error(f"Error displaying question: {e}")
+        # Try sending as new message if edit fails
+        await query.message.reply_text(text, reply_markup=reply_markup)
+
+
+async def process_answer(query, user_id, question_index, selected_option):
+    """Process user's answer and move to next question"""
+    logger.info(f"Processing answer - User: {user_id}, Question: {question_index}, Option: {selected_option}")
+    
+    state = user_quiz_state.get(user_id)
+    if not state:
+        logger.error(f"No quiz state for user {user_id}")
+        await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+        return
+    
+    questions = state["questions"]
+    
+    if question_index >= len(questions):
+        logger.error(f"Invalid question index: {question_index}, total: {len(questions)}")
+        return
+    
+    question_data = questions[question_index]
+    
+    correct_answer = question_data["answer"]
+    is_correct = selected_option == correct_answer
+    
+    # Store the answer
+    state["answers"].append({
+        "selected": selected_option,
+        "correct": correct_answer,
+        "is_correct": is_correct,
+    })
+    
+    if is_correct:
+        state["correct_count"] += 1
+    
+    # Move to next question
+    state["current_index"] += 1
+    logger.info(f"Moving to question {state['current_index']}, total questions: {len(questions)}")
+    
+    await show_question(query, user_id, state["current_index"])
+
+
+async def show_final_review(query, user_id):
+    """Show final score and complete review of all questions"""
+    try:
+        state = user_quiz_state.get(user_id)
+        if not state:
+            logger.error(f"No quiz state found for user {user_id}")
+            await query.message.reply_text("Quiz session expired. Please start a new quiz with /start")
+            return
+        
+        questions = state["questions"]
+        answers = state["answers"]
+        correct_count = state["correct_count"]
+        total_questions = len(questions)
+        
+        percentage = (correct_count / total_questions) * 100
+        
+        # Calculate time taken
+        start_time = state["start_time"]
+        end_time = datetime.now()
+        time_taken = end_time - start_time
+        
+        # Format time taken
+        total_seconds = int(time_taken.total_seconds())
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        
+        if minutes > 0:
+            time_display = f"{minutes} min {seconds} sec"
+        else:
+            time_display = f"{seconds} sec"
+        
+        # Save results to database
+        try:
+            save_quiz_result(
+                user_id=user_id,
+                topic=state["topic"],
+                level=state["level"],
+                score=correct_count,
+                total=total_questions,
+                percentage=percentage,
+                time_seconds=total_seconds,
+            )
+        except Exception as db_error:
+            logger.error(f"Database save error: {db_error}")
+            # Continue anyway - user should still see results
+        
+        # Build review message header
+        topic_name = "Grammar" if state["topic"] == "grammar" else "Vocabulary"
+        review_header = f"""🎯 Quiz Complete!
+
+📊 Final Score: {correct_count}/{total_questions} ({percentage:.1f}%)
+⏱️ Time Taken: {time_display}
+
+{'🎉 Excellent!' if percentage >= 80 else '👍 Good job!' if percentage >= 60 else '💪 Keep practicing!'}
+
+═══════════════════════
+📋 COMPLETE REVIEW
+═══════════════════════
+
+"""
+        
+        # Build review for each question - simpler format to avoid length issues
+        review_questions = []
+        
+        for i, (question_data, answer_data) in enumerate(zip(questions, answers)):
+            question_text = question_data["q"]
+            options = question_data["options"]
+            selected_idx = answer_data["selected"]
+            correct_idx = answer_data["correct"]
+            is_correct = answer_data["is_correct"]
+            
+            status = "✅" if is_correct else "❌"
+            
+            # Shortened format to fit more in one message
+            q_review = f"{status} Q{i+1}. {question_text}\n"
+            q_review += f"   You: {chr(65+selected_idx)}. {options[selected_idx]}\n"
+            if not is_correct:
+                q_review += f"   ✓ {chr(65+correct_idx)}. {options[correct_idx]}\n"
+            q_review += "\n"
+            
+            review_questions.append(q_review)
+        
+        # Combine all reviews
+        full_review = review_header + "".join(review_questions)
+        
+        # Add footer
+        full_review += "═══════════════════════\n\nWant to practice more? Use /start"
+        
+        # Clear quiz state before sending
+        del user_quiz_state[user_id]
+        
+        # Prepare keyboard
+        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        # Try to send as single message first
+        try:
+            await query.edit_message_text(full_review, reply_markup=reply_markup)
+            logger.info(f"Review sent successfully for user {user_id}")
+        except Exception as telegram_error:
+            logger.error(f"Telegram edit error: {telegram_error}")
+            # If edit fails, send as new message
+            try:
+                await query.message.reply_text(full_review, reply_markup=reply_markup)
+                logger.info(f"Review sent as new message for user {user_id}")
+            except Exception as reply_error:
+                logger.error(f"Failed to send review: {reply_error}")
+                # Last resort - send simple summary
+                simple_message = f"""🎯 Quiz Complete!
+
+📊 Score: {correct_count}/{total_questions} ({percentage:.1f}%)
+⏱️ Time: {time_display}
+
+Use /start to practice more!"""
+                await query.message.reply_text(simple_message, reply_markup=reply_markup)
+                
+    except Exception as e:
+        logger.error(f"Critical error in show_final_review: {e}")
+        # Make sure user can continue even if review fails
+        keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        try:
+            await query.message.reply_text(
+                "Quiz completed! There was an issue showing the review. Use /start to try again.",
+                reply_markup=reply_markup
+            )
+        except:
+            pass  # If even this fails, user will need to use /start manually
+
+
+async def show_score(query, user_id):
+    """Show user's latest scores and statistics"""
+    try:
+        logger.info(f"show_score called for user {user_id}")
+        stats = get_user_stats(user_id)
+        
+        if not stats:
+            text = """
+📊 Your Scores
+
+You haven't taken any quizzes yet!
+Start practicing with /start
+            """
+        else:
+            # Format average times
+            def format_time(seconds):
+                if seconds == 0 or seconds is None:
+                    return "N/A"
+                minutes = int(seconds // 60)
+                secs = int(seconds % 60)
+                if minutes > 0:
+                    return f"{minutes}m {secs}s"
+                return f"{secs}s"
+            
+            overall_time = format_time(stats.get('overall_time', 0))
+            grammar_time = format_time(stats.get('grammar_time', 0))
+            vocab_time = format_time(stats.get('vocabulary_time', 0))
+            
+            text = f"""
+📊 Your Performance Statistics
+
+🎯 Total Quizzes: {stats['total_quizzes']}
+⏱️ Average Time: {overall_time}
+
+📘 Grammar:
+   • Quizzes: {stats['grammar_count']}
+   • Avg Score: {stats['grammar_avg']:.1f}%
+   • Avg Time: {grammar_time}
+
+📗 Vocabulary:
+   • Quizzes: {stats['vocabulary_count']}
+   • Avg Score: {stats['vocabulary_avg']:.1f}%
+   • Avg Time: {vocab_time}
+
+📈 Overall Accuracy: {stats['overall_avg']:.1f}%
+
+Keep practicing to improve! 💪
+            """
+        
+        keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        try:
+            await query.edit_message_text(text, reply_markup=reply_markup)
+            logger.info(f"Score displayed successfully for user {user_id}")
+        except Exception as edit_error:
+            logger.error(f"Error editing message: {edit_error}")
+            await query.message.reply_text(text, reply_markup=reply_markup)
+            
+    except Exception as e:
+        logger.error(f"Error in show_score: {e}")
+        error_text = "Sorry, there was an error loading your statistics. Please try again."
+        keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        try:
+            await query.edit_message_text(error_text, reply_markup=reply_markup)
+        except:
+            await query.message.reply_text(error_text, reply_markup=reply_markup)
+
+
+async def show_performance(query, user_id):
+    """Generate and send performance chart"""
+    try:
+        logger.info(f"show_performance called for user {user_id}")
+        history = get_user_history(user_id)
+        
+        if not history or len(history) < 2:
+            text = """
+📈 Performance Chart
+
+You need at least 2 quiz attempts to see your progress chart.
+Keep practicing! 🚀
+            """
+            keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            try:
+                await query.edit_message_text(text, reply_markup=reply_markup)
+            except Exception as edit_error:
+                logger.error(f"Error editing message: {edit_error}")
+                await query.message.reply_text(text, reply_markup=reply_markup)
+            return
+        
+        # Generate chart
+        try:
+            chart_buffer = generate_performance_chart(history)
+            logger.info(f"Chart generated successfully for user {user_id}")
+        except Exception as chart_error:
+            logger.error(f"Error generating chart: {chart_error}")
+            error_text = "Sorry, there was an error generating your chart. Please try again."
+            keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text(error_text, reply_markup=reply_markup)
+            return
+        
+        # Send chart as photo
+        try:
+            await query.message.reply_photo(
+                photo=chart_buffer,
+                caption=f"📈 Your Progress Chart\n\nTotal Quizzes: {len(history)}\nKeep up the great work! 🎓"
+            )
+            logger.info(f"Chart sent successfully for user {user_id}")
+        except Exception as send_error:
+            logger.error(f"Error sending chart: {send_error}")
+            error_text = "Sorry, there was an error sending your chart. Please try again."
+            keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.message.reply_text(error_text, reply_markup=reply_markup)
+            return
+        
+        # Show menu again
+        await show_main_menu_after_chart(query)
+        
+    except Exception as e:
+        logger.error(f"Critical error in show_performance: {e}")
+        error_text = "Sorry, there was an error loading your performance data. Please try again."
+        keyboard = [[InlineKeyboardButton("⬅️ Back to Menu", callback_data="back_to_menu")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        try:
+            await query.message.reply_text(error_text, reply_markup=reply_markup)
+        except:
+            pass
+
+
+def generate_performance_chart(history):
+    """Create a line chart showing score progression over time"""
+    dates = [datetime.fromisoformat(h['date']) for h in history]
+    scores = [h['percentage'] for h in history]
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(dates, scores, marker='o', linewidth=2, markersize=8, color='#2E86AB')
+    
+    # Formatting
+    plt.title('Your English Practice Progress', fontsize=16, fontweight='bold')
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Score (%)', fontsize=12)
+    plt.ylim(0, 105)
+    plt.grid(True, alpha=0.3)
+    
+    # Format x-axis dates
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d'))
+    plt.gcf().autofmt_xdate()
+    
+    # Add a horizontal line at 80% (good performance)
+    plt.axhline(y=80, color='green', linestyle='--', alpha=0.5, label='Target (80%)')
+    plt.legend()
+    
+    # Save to buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+    buffer.seek(0)
+    plt.close()
+    
+    return buffer
+
 
 async def show_main_menu(query):
     """Show main menu"""
     keyboard = [
-        [InlineKeyboardButton("📘 Grammar", callback_data='category_grammar')],
-        [InlineKeyboardButton("📗 Vocabulary", callback_data='category_vocabulary')],
-        [InlineKeyboardButton("📊 My Score", callback_data='show_score')]
+        [InlineKeyboardButton("📘 Grammar", callback_data="topic_grammar")],
+        [InlineKeyboardButton("📗 Vocabulary", callback_data="topic_vocabulary")],
+        [InlineKeyboardButton("📊 My Score", callback_data="my_score")],
+        [InlineKeyboardButton("📈 My Performance", callback_data="my_performance")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text("Choose a category:", reply_markup=reply_markup)
+    text = """
+🏠 Main Menu
 
-# ============================================
-# ❓ QUIZ FUNCTIONS
-# ============================================
+Choose what you want to do:
+• Practice Grammar or Vocabulary
+• Check your scores
+• View your progress chart
+    """
+    
+    await query.edit_message_text(text, reply_markup=reply_markup)
 
-async def start_quiz(query, user_id, level):
-    """Start a quiz session"""
-    user_score = get_user_score(user_id)
-    category = user_score['current_category']
+
+async def show_main_menu_after_chart(query):
+    """Show main menu after sending chart"""
+    keyboard = [
+        [InlineKeyboardButton("📘 Grammar", callback_data="topic_grammar")],
+        [InlineKeyboardButton("📗 Vocabulary", callback_data="topic_vocabulary")],
+        [InlineKeyboardButton("📊 My Score", callback_data="my_score")],
+        [InlineKeyboardButton("📈 My Performance", callback_data="my_performance")],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # Save current level and reset question index
-    user_score['current_level'] = level
-    user_score['current_question_index'] = 0
+    text = "🏠 What would you like to do next?"
     
-    # Save score at start of quiz (for calculating quiz-specific results)
-    if category == 'grammar':
-        user_score['quiz_start_correct'] = user_score['grammar_correct']
-        user_score['quiz_start_total'] = user_score['grammar_total']
+    await query.message.reply_text(text, reply_markup=reply_markup)
+
+
+async def score_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /score command"""
+    user_id = update.effective_user.id
+    stats = get_user_stats(user_id)
+    
+    if not stats:
+        text = "You haven't taken any quizzes yet! Use /start to begin."
     else:
-        user_score['quiz_start_correct'] = user_score['vocabulary_correct']
-        user_score['quiz_start_total'] = user_score['vocabulary_total']
+        # Format average times
+        def format_time(seconds):
+            if seconds == 0:
+                return "N/A"
+            minutes = int(seconds // 60)
+            secs = int(seconds % 60)
+            if minutes > 0:
+                return f"{minutes}m {secs}s"
+            return f"{secs}s"
+        
+        overall_time = format_time(stats['overall_time'])
+        
+        text = f"""
+📊 Your Statistics
+
+Total Quizzes: {stats['total_quizzes']}
+Overall Accuracy: {stats['overall_avg']:.1f}%
+Average Time: {overall_time}
+
+Grammar: {stats['grammar_avg']:.1f}%
+Vocabulary: {stats['vocabulary_avg']:.1f}%
+        """
     
-    # Check if questions exist for this level
-    if level not in QUESTIONS[category] or len(QUESTIONS[category][level]) == 0:
-        await query.edit_message_text(
-            f"❌ No questions available for {category.upper()} - {level} yet.\n\n"
-            "The teacher will add them soon!",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🏠 Main Menu", callback_data='main_menu')
-            ]])
+    await update.message.reply_text(text)
+
+
+async def performance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /performance command"""
+    user_id = update.effective_user.id
+    history = get_user_history(user_id)
+    
+    if not history or len(history) < 2:
+        await update.message.reply_text(
+            "You need at least 2 quiz attempts to see your progress chart.\n"
+            "Keep practicing! 🚀"
         )
         return
     
-    # Show first question
-    await show_question(query, user_id)
+    chart_buffer = generate_performance_chart(history)
+    await update.message.reply_photo(
+        photo=chart_buffer,
+        caption=f"📈 Your Progress Chart\n\nTotal Quizzes: {len(history)}"
+    )
 
-async def show_question(query, user_id):
-    """Display current question with answer options"""
-    user_score = get_user_score(user_id)
-    category = user_score['current_category']
-    level = user_score['current_level']
-    q_index = user_score['current_question_index']
-    
-    questions = QUESTIONS[category][level]
-    
-    # Check if quiz is finished
-    if q_index >= len(questions):
-        await show_quiz_results(query, user_id)
-        return
-    
-    # Get current question
-    question = questions[q_index]
-    
-    # Create answer buttons (2 per row)
-    keyboard = []
-    for i, option in enumerate(question['options']):
-        if i % 2 == 0:
-            keyboard.append([InlineKeyboardButton(option, callback_data=f'answer_{i}')])
-        else:
-            keyboard[-1].append(InlineKeyboardButton(option, callback_data=f'answer_{i}'))
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    category_emoji = "📘" if category == "grammar" else "📗"
-    message = f"""
-{category_emoji} {category.upper()} - Level {level}
-
-Question {q_index + 1}/{len(questions)}:
-
-{question['q']}
-    """
-    
-    await query.edit_message_text(message, reply_markup=reply_markup)
-
-async def check_answer(query, user_id, answer_index):
-    """Check if the selected answer is correct"""
-    user_score = get_user_score(user_id)
-    category = user_score['current_category']
-    level = user_score['current_level']
-    q_index = user_score['current_question_index']
-    
-    questions = QUESTIONS[category][level]
-    question = questions[q_index]
-    
-    # Check if answer is correct
-    is_correct = (answer_index == question['answer'])
-    
-    # Update score
-    if category == 'grammar':
-        user_score['grammar_total'] += 1
-        if is_correct:
-            user_score['grammar_correct'] += 1
-    else:
-        user_score['vocabulary_total'] += 1
-        if is_correct:
-            user_score['vocabulary_correct'] += 1
-    
-    # Show feedback
-    correct_answer = question['options'][question['answer']]
-    selected_answer = question['options'][answer_index]
-    
-    if is_correct:
-        feedback = f"✅ Correct!\n\n'{selected_answer}' is the right answer!"
-    else:
-        feedback = f"❌ Wrong!\n\nYou selected: '{selected_answer}'\nCorrect answer: '{correct_answer}'"
-    
-    # Move to next question index
-    user_score['current_question_index'] += 1
-    
-    # Check if there are more questions
-    if user_score['current_question_index'] >= len(questions):
-        # Quiz finished - show results
-        keyboard = [[InlineKeyboardButton("📊 See Results", callback_data='quiz_results')]]
-    else:
-        # More questions available
-        keyboard = [[InlineKeyboardButton("➡️ Next Question", callback_data='next_question')]]
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(feedback, reply_markup=reply_markup)
-
-async def show_quiz_results(query, user_id):
-    """Show results after completing all questions"""
-    user_score = get_user_score(user_id)
-    category = user_score['current_category']
-    level = user_score['current_level']
-    
-    questions = QUESTIONS[category][level]
-    quiz_total = len(questions)
-    
-    # Get current totals
-    if category == 'grammar':
-        current_correct = user_score['grammar_correct']
-    else:
-        current_correct = user_score['vocabulary_correct']
-    
-    # Calculate this quiz's score using saved start values
-    quiz_correct = current_correct - user_score['quiz_start_correct']
-    percentage = (quiz_correct / quiz_total * 100) if quiz_total > 0 else 0
-    
-    category_emoji = "📘" if category == "grammar" else "📗"
-    
-    message = f"""
-🎉 Quiz Complete!
-
-{category_emoji} {category.upper()} - Level {level}
-
-Your Score: {quiz_correct}/{quiz_total}
-Percentage: {percentage:.1f}%
-
-{'🌟 Perfect!' if percentage == 100 else '💪 Keep practicing!'}
-    """
-    
-    keyboard = [
-        [InlineKeyboardButton("📊 My Total Score", callback_data='show_score')],
-        [InlineKeyboardButton("🔄 Try Again", callback_data=f'level_{level}')],
-        [InlineKeyboardButton("🏠 Main Menu", callback_data='main_menu')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(message, reply_markup=reply_markup)
-
-async def show_score(query, user_id):
-    """Show user's total score"""
-    user_score = get_user_score(user_id)
-    
-    # Grammar stats
-    g_correct = user_score['grammar_correct']
-    g_total = user_score['grammar_total']
-    g_percentage = (g_correct / g_total * 100) if g_total > 0 else 0
-    
-    # Vocabulary stats
-    v_correct = user_score['vocabulary_correct']
-    v_total = user_score['vocabulary_total']
-    v_percentage = (v_correct / v_total * 100) if v_total > 0 else 0
-    
-    message = f"""
-📊 YOUR TOTAL SCORE
-
-📘 GRAMMAR:
-✅ Correct: {g_correct}/{g_total}
-📈 Success Rate: {g_percentage:.1f}%
-
-📗 VOCABULARY:
-✅ Correct: {v_correct}/{v_total}
-📈 Success Rate: {v_percentage:.1f}%
-
-Keep learning! 🎓
-    """
-    
-    keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data='main_menu')]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await query.edit_message_text(message, reply_markup=reply_markup)
-
-# ============================================
-# 🚀 MAIN FUNCTION - START THE BOT
-# ============================================
 
 def main():
     """Start the bot"""
-    print("🤖 Starting English Learning Bot...")
+    # Initialize database
+    init_db()
     
-    # Check if token is configured
-    if BOT_TOKEN == 'YOUR_BOT_TOKEN_HERE':
-        print("❌ ERROR: Please set your Telegram bot token!")
-        print("   1. Talk to @BotFather on Telegram")
-        print("   2. Create a new bot and get your token")
-        print("   3. Replace 'YOUR_BOT_TOKEN_HERE' in bot.py")
-        return
+    # Get bot token from environment variable
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
     
-    # Create the Application
-    application = Application.builder().token(BOT_TOKEN).build()
+    if not token:
+        raise ValueError(
+            "No TELEGRAM_BOT_TOKEN found in environment variables!\n"
+            "Please set it in Render dashboard."
+        )
     
-    # Register handlers
+    # Create application
+    application = Application.builder().token(token).build()
+    
+    # Add handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(button_callback))
+    application.add_handler(CommandHandler("score", score_command))
+    application.add_handler(CommandHandler("performance", performance_command))
+    application.add_handler(CallbackQueryHandler(button_handler))
     
-    print("✅ Bot is running!")
-    print("💡 Press Ctrl+C to stop")
+    # Check if running on Render (webhook mode) or locally (polling mode)
+    port = os.environ.get("PORT")
     
-    # Start the bot using LONG POLLING (perfect for PythonAnywhere)
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    if port:
+        # Render Web Service mode with webhook
+        webhook_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if not webhook_url:
+            raise ValueError(
+                "RENDER_EXTERNAL_URL not found! This should be auto-set by Render.\n"
+                "Format: https://your-service.onrender.com"
+            )
+        
+        logger.info(f"Starting bot in WEBHOOK mode on port {port}")
+        logger.info(f"Webhook URL: {webhook_url}")
+        
+        # Start webhook
+        application.run_webhook(
+            listen="0.0.0.0",
+            port=int(port),
+            url_path=token,  # Use token as secret path
+            webhook_url=f"{webhook_url}/{token}",
+        )
+    else:
+        # Local development mode with polling
+        logger.info("Starting bot in POLLING mode (local development)")
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
