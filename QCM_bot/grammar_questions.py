@@ -543,7 +543,7 @@ GRAMMAR_QUESTIONS = {
         {"q": "So intricate ___ that it baffled experts.", "options": ["the system was", "was the system", "the system is", "is the system"], "answer": 1},
         {"q": "Try as he ___, he couldn’t succeed.", "options": ["might", "may", "can", "could"], "answer": 0},
         {"q": "Under no circumstances ___ access without permission.", "options": ["is allowed", "allowed is", "are allowed", "allow"], "answer": 0},
-    ]
+    ],
     "A1": [
         {"q": "He ___ my brother.", "options": ["am", "is", "are", "be"], "answer": 1},
         {"q": "We ___ in Cambodia.", "options": ["live", "lives", "living", "lived"], "answer": 0},
