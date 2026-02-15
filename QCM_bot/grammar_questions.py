@@ -466,7 +466,7 @@ GRAMMAR_QUESTIONS = {
             "options": ["florid", "grandiloquent", "magniloquent", "turgid"],
             "answer": 1
         },
-    ]
+    ],
     "A1": [
         {"q": "She ___ a student.", "options": ["am", "is", "are", "be"], "answer": 1},
         {"q": "They ___ from France.", "options": ["is", "are", "am", "be"], "answer": 1},
@@ -708,5 +708,6 @@ GRAMMAR_QUESTIONS = {
      "options": ["is", "be", "was", "being"], "answer": 2},
 
     {"q": "So complex ___ that even experts struggled to interpret it.", 
-     "options": ["was the theory", "the theory was", "is the theory", "the theory is"], "answer": 0} ]
+     "options": ["was the theory", "the theory was", "is the theory", "the theory is"], "answer": 0} 
+    ],
 }
