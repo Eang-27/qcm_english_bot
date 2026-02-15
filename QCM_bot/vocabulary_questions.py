@@ -212,7 +212,7 @@ VOCABULARY_QUESTIONS = {
      "options": ["impact", "apple", "music", "shirt"], "answer": "impact"},
     
     {"q": "There is strong ___ between diet and health.",
-     "options": ["connection", "window", "lesson", "chair"], "answer": "connection"}
+     "options": ["connection", "window", "lesson", "chair"], "answer": "connection"},
 {"q": "The results are ___ with previous studies.",
  "options": ["consistent", "hungry", "cheap", "angry"], "answer": 0}, 
         {"q": "The government plans to ___ taxes next year.", "options": ["increase", "arrive", "listen", "climb"], "answer": "increase"},
