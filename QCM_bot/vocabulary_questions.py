@@ -704,14 +704,14 @@ VOCABULARY_QUESTIONS = {
 }
 def shuffle_questions(VOCABULARY_QUESTIONS):
     shuffled_list = []
-    for q in questions:
+    for q in VOCABULARY_QUESTIONS:
         opts = q["options"].copy()
         random.shuffle(opts)
         answer_index = opts.index(q["answer"])
         shuffled_list.append({"q": q["q"], "options": opts, "answer": answer_index})
     return shuffled_list
 
-random_bac_questions = shuffle_questions(questions)
+random_bac_questions = shuffle_questions(VOCABULARY_QUESTIONS)
 
 # Example output
 for q in random_bac_questions:
