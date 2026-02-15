@@ -1,4 +1,4 @@
-
+import random
 VOCABULARY_QUESTIONS = {
     "A1": [
         {
@@ -146,74 +146,73 @@ VOCABULARY_QUESTIONS = {
         },
         {
             "q": "She ___ an appointment with the doctor.",
-            "options": ["took", "made", "had", "did"],
+            "options": ["took", "made", "did", "had"],
             "answer": 1
         },
         {
             "q": "Please ___ attention to what I'm saying.",
-            "options": ["give", "take", "pay", "make"],
-            "answer": 2
+            "options": ["give", "take", "make", "pay"],
+            "answer": 3
         },
     ],
     
     "B1": [
-        {"q": "The government plans to ___ taxes next year.",
- "options": ["increase", "arrive", "listen", "climb"], "answer": 0},
-
-{"q": "Pollution has a serious ___ on health.",
- "options": ["effect", "food", "friend", "lesson"], "answer": 0},
-
-{"q": "She made an important ___.",
- "options": ["decision", "banana", "chair", "river"], "answer": 0},
-
-{"q": "The company faces strong ___.",
- "options": ["competition", "holiday", "music", "weather"], "answer": 0},
-
-{"q": "We need to find a ___ to this problem.",
- "options": ["solution", "shoe", "window", "shirt"], "answer": 0},
-
-{"q": "He is very ___ in science.",
- "options": ["interested", "interesting", "interest", "interests"], "answer": 0},
-
-{"q": "The number of students has ___.",
- "options": ["increased", "slept", "broken", "fallen"], "answer": 0},
-
-{"q": "The teacher explained the lesson ___.",
- "options": ["clearly", "clear", "clearness", "cleared"], "answer": 0},
-
-{"q": "She showed great ___.",
- "options": ["confidence", "coffee", "traffic", "forest"], "answer": 0},
-
-{"q": "The economy is facing a serious ___.",
- "options": ["crisis", "picnic", "party", "game"], "answer": 0},
-
-{"q": "The results were very ___.",
- "options": ["significant", "yellow", "cheap", "short"], "answer": 0},
-
-{"q": "He apologized ___ being late.",
- "options": ["for", "to", "at", "with"], "answer": 0},
-
-{"q": "The project was ___ because of lack of money.",
- "options": ["delayed", "completed", "improved", "approved"], "answer": 0},
-
-{"q": "She is responsible ___ the project.",
- "options": ["for", "of", "with", "at"], "answer": 0},
-
-{"q": "The issue is highly ___.",
- "options": ["controversial", "blue", "small", "easy"], "answer": 0},
-
-{"q": "The government must ___ new laws.",
- "options": ["enforce", "eat", "sleep", "paint"], "answer": 0},
-
-{"q": "He gave a short ___.",
- "options": ["speech", "banana", "shoe", "garden"], "answer": 0},
-
-{"q": "The policy had a positive ___.",
- "options": ["impact", "apple", "music", "shirt"], "answer": 0},
-
-{"q": "There is strong ___ between diet and health.",
- "options": ["connection", "window", "lesson", "chair"], "answer": 0},
-
+    {"q": "The government plans to ___ taxes next year.",
+     "options": ["increase", "arrive", "listen", "climb"], "answer": 0},
+    
+    {"q": "Pollution has a serious ___ on health.",
+     "options": ["effect", "food", "friend", "lesson"], "answer": 0},
+    
+    {"q": "She made an important ___.",
+     "options": ["feeling", "think", "chair", "decision"], "answer": 3},
+    
+    {"q": "The company faces strong ___.",
+     "options": ["competition", "holiday", "music", "weather"], "answer": "competition"},
+    
+    {"q": "We need to find a ___ to this problem.",
+     "options": ["solution", "shoe", "window", "shirt"], "answer": "solution"},
+    
+    {"q": "He is very ___ in science.",
+     "options": ["interested", "interesting", "interest", "interests"], "answer": "interested"},
+    
+    {"q": "The number of students has ___.",
+     "options": ["increased", "slept", "broken", "fallen"], "answer": "increased"},
+    
+    {"q": "The teacher explained the lesson ___.",
+     "options": ["clearly", "clear", "clearness", "cleared"], "answer": "clearly"},
+    
+    {"q": "She showed great ___.",
+     "options": ["confidence", "coffee", "traffic", "forest"], "answer": "confidence"},
+    
+    {"q": "The economy is facing a serious ___.",
+     "options": ["crisis", "picnic", "party", "game"], "answer": "crisis"},
+    
+    {"q": "The results were very ___.",
+     "options": ["significant", "yellow", "cheap", "short"], "answer": "significant"},
+    
+    {"q": "He apologized ___ being late.",
+     "options": ["for", "to", "at", "with"], "answer": "for"},
+    
+    {"q": "The project was ___ because of lack of money.",
+     "options": ["delayed", "completed", "improved", "approved"], "answer": "delayed"},
+    
+    {"q": "She is responsible ___ the project.",
+     "options": ["for", "of", "with", "at"], "answer": "for"},
+    
+    {"q": "The issue is highly ___.",
+     "options": ["controversial", "blue", "small", "easy"], "answer": "controversial"},
+    
+    {"q": "The government must ___ new laws.",
+     "options": ["enforce", "eat", "sleep", "paint"], "answer": "enforce"},
+    
+    {"q": "He gave a short ___.",
+     "options": ["speech", "banana", "shoe", "garden"], "answer": "speech"},
+    
+    {"q": "The policy had a positive ___.",
+     "options": ["impact", "apple", "music", "shirt"], "answer": "impact"},
+    
+    {"q": "There is strong ___ between diet and health.",
+     "options": ["connection", "window", "lesson", "chair"], "answer": "connection"}
 {"q": "The results are ___ with previous studies.",
  "options": ["consistent", "hungry", "cheap", "angry"], "answer": 0}, 
         {"q": "The government plans to ___ taxes next year.", "options": ["increase", "arrive", "listen", "climb"], "answer": "increase"},
@@ -703,3 +702,17 @@ VOCABULARY_QUESTIONS = {
         {"q": "The strategy was brilliantly ___.", "options": ["executed", "drunk", "cut", "washed"], "answer": 0}
     ],
 }
+def shuffle_questions(VOCABULARY_QUESTIONS):
+    shuffled_list = []
+    for q in questions:
+        opts = q["options"].copy()
+        random.shuffle(opts)
+        answer_index = opts.index(q["answer"])
+        shuffled_list.append({"q": q["q"], "options": opts, "answer": answer_index})
+    return shuffled_list
+
+random_bac_questions = shuffle_questions(questions)
+
+# Example output
+for q in random_bac_questions:
+    print(q)
